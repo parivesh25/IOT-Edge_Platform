@@ -51,4 +51,4 @@ boards without WiFi, edge rules, and built-in benchmarking.
 
 ## License
 
-[Choose a license before making the repo public.]
+MIT License
