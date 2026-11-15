@@ -4,14 +4,13 @@
 #include <PubSubClient.h>
 #include "secrets.h"
 
-const char* DEVICE_ID = "esp32s3-1";
-const char* SENSOR_ID = "analog0";
+const char* DEVICE_ID = "esp32s3eth-1";   // new unique ID for this board
 const char* PROJECT   = "demo";
-const int   SENSOR_PIN = 4;          // GPIO4 is on ADC1 (safe to use with WiFi)
+const int POT_PIN   = 1;   // GPIO1 = ADC1, header pin 25
+const int TOUCH_PIN = 2;   // GPIO2 = touch pad 2, header pin 26
 
 WiFiClient wifiClient;
 PubSubClient mqtt(wifiClient);
-char topic[80];
 
 void connectWifi() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -20,14 +19,23 @@ void connectWifi() {
 
 void connectMqtt() {
   while (!mqtt.connected()) {
-    mqtt.connect(DEVICE_ID);          // client ID must be unique per device
+    mqtt.connect(DEVICE_ID);
     if (!mqtt.connected()) delay(2000);
   }
 }
 
+void publishValue(const char* sensor, float value) {
+  char t[80], msg[120];
+  snprintf(t, sizeof(t), "lab/%s/%s/%s", PROJECT, DEVICE_ID, sensor);
+  snprintf(msg, sizeof(msg),
+           "{\"device\":\"%s\",\"sensor\":\"%s\",\"value\":%.1f}",
+           DEVICE_ID, sensor, value);
+  mqtt.publish(t, msg);
+  Serial.println(msg);
+}
+
 void setup() {
   Serial.begin(115200);
-  snprintf(topic, sizeof(topic), "lab/%s/%s/%s", PROJECT, DEVICE_ID, SENSOR_ID);
   connectWifi();
   mqtt.setServer(BROKER_IP, 1883);
 }
@@ -35,16 +43,12 @@ void setup() {
 void loop() {
   if (WiFi.status() != WL_CONNECTED) connectWifi();
   if (!mqtt.connected()) connectMqtt();
-  mqtt.loop();                        // keep-alive and incoming messages
+  mqtt.loop();
 
-  int value = analogRead(SENSOR_PIN); // 0-4095 (12-bit ADC, 0-3.3 V)
-
-  char msg[120];
-  snprintf(msg, sizeof(msg),
-           "{\"device\":\"%s\",\"sensor\":\"%s\",\"value\":%d}",
-           DEVICE_ID, SENSOR_ID, value);
-  mqtt.publish(topic, msg);
-  Serial.println(msg);
+  publishValue("pot", analogRead(POT_PIN));        // 0-4095
+  publishValue("touch", touchRead(TOUCH_PIN));
+  publishValue("chip_temp", temperatureRead());    // delete if it won't compile
+  publishValue("wifi_rssi", WiFi.RSSI());
 
   delay(1000);
 }
