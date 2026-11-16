@@ -22,6 +22,9 @@ services:
     command: ["python", "-m", "edge_service.edge_service"]
     environment:
       BROKER_HOST: mosquitto
+      RULES_FILE: /rules/rules.json
+    volumes:
+      - rules-data:/rules:ro
     depends_on:
       mosquitto:
         condition: service_healthy
@@ -45,10 +48,12 @@ services:
     environment:
       BROKER_HOST: mosquitto
       DATABASE_PATH: /data/readings.db
+      RULES_FILE: /rules/rules.json
       LAN_IP: "${LAN_IP:-}"
       CLOUD_BROKER: "${CLOUD_BROKER:-test.mosquitto.org}"
     volumes:
       - dashboard-data:/data
+      - rules-data:/rules
     depends_on:
       mosquitto:
         condition: service_healthy
@@ -67,3 +72,4 @@ services:
 
 volumes:
   dashboard-data:
+  rules-data:

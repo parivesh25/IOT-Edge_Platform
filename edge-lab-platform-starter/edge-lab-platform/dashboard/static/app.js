@@ -196,3 +196,21 @@ events.addEventListener("update", refresh);
 // as a fallback when the small lab server's eight SSE slots are occupied.
 setInterval(refresh, 5000);
 refresh();
+
+// Rules load separately so live chart refreshes never overwrite a student's form.
+async function loadRules() {
+  if (!$("rule-values")) return;
+  const result = await api('/api/projects/' + projectName + '/rules');
+  $("rule-values").textContent = Object.entries(result.rules).map(([sensor, rule]) => `${sensor}: ${rule[0]} ${rule[1]}`).join('\n');
+}
+$("rule-form")?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const body = Object.fromEntries(new FormData(event.target));
+  body.limit = Number(body.limit);
+  try {
+    await api('/api/projects/' + projectName + '/rules', body);
+    $("rule-status").textContent = 'Saved. The next readings will use this rule within three seconds.';
+    await loadRules();
+  } catch (error) { notice(error.message); }
+});
+loadRules().catch(error => notice(error.message));

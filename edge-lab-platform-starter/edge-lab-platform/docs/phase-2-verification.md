@@ -50,5 +50,17 @@ Hardware flashing, firmware compilation, physical sensors, real board WiFi and
 hotspot/firewall access from another device remain unverified. Hardware roadmap
 items remain unticked. No credentials were copied or entered by the agent.
 
-Lower-priority rule editing and scaffolding are separate work after this priority
-build is committed. No merge to main is authorized.
+After the priority build was committed, project rule editing was added and tested:
+saving a below-100 temperature rule produced real edge alerts without restarting
+the edge service. The /lab overview returned successfully, and the scaffolder
+created projects/scaffold-check/README.md, retained as an example test artifact.
+
+Additional files: rules.py validates and atomically saves the shared rules file;
+tools/new_project.py creates project READMEs; docs/connect-your-project.md provides
+the student walkthrough. Compose mounts the rules volume read-only in the edge
+service. The dashboard form and API save rules; the edge reloads on incoming
+readings at most every three seconds. Invalid/missing files use built-in defaults.
+Automatic loading of separate student rule files (the stretch item) is not included.
+
+The repeat benchmark received 100/100 samples on both paths: local mean 0.28 ms,
+public mean 157.81 ms. No merge to main is authorized.

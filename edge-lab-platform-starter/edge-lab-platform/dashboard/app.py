@@ -16,6 +16,7 @@ from common import MessageProblem, valid_name
 from dashboard.benchmark import Benchmarks
 from dashboard.sketches import sketch
 from dashboard.store import Store
+from rules import read_rules, rules_path, for_project, save_rule
 
 
 def csv_response(rows, fields, filename):
@@ -34,6 +35,28 @@ def create_app(store=None):
     app.extensions["store"] = store
     benchmarks = Benchmarks(store, os.getenv("BROKER_HOST", "localhost"), int(os.getenv("BROKER_PORT", "1883")))
     slots = threading.BoundedSemaphore(8)
+    rule_lock = threading.Lock()
+
+    @app.get('/api/projects/<name>/rules')
+    def get_rules(name):
+        if not valid_name(name) or store.project(name) is None:
+            abort(404)
+        return jsonify(rules=for_project(name, read_rules(rules_path())))
+
+    @app.post('/api/projects/<name>/rules')
+    def update_rules(name):
+        if not valid_name(name) or store.project(name) is None:
+            abort(404)
+        body = request.get_json()
+        if not isinstance(body, dict):
+            raise ValueError('Send sensor, direction and limit fields.')
+        with rule_lock:
+            save_rule(name, body.get('sensor'), body.get('direction'), body.get('limit'))
+        return jsonify(status='saved')
+
+    @app.get('/lab')
+    def lab_page():
+        return render_template('index.html', page='home', project='')
 
     @app.before_request
     def same_origin_writes():
