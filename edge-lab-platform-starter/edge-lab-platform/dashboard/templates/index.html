@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EdgeLab · Student workspace</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body data-page="{{ page }}" data-project="{{ project }}">
+  <aside class="sidebar">
+    <a class="brand" href="/"><span class="brand-mark">E<span>•</span></span> EdgeLab</a>
+    <p class="eyebrow">STUDENT WORKSPACE</p>
+    <nav aria-label="Main navigation">
+      <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}>▦ &nbsp; Projects</a>
+      <a href="/new" {% if page == 'new' %}aria-current="page"{% endif %}>＋ &nbsp; Connect a board</a>
+      <a href="/benchmark" {% if page == 'benchmark' %}aria-current="page"{% endif %}>↔ &nbsp; Edge vs Cloud</a>
+    </nav>
+    <div class="sidebar-note"><span class="status-dot"></span> Built for the lab<p>Local processing.<br>Room to experiment.</p></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span>College lab <span class="slash">/</span> Workspace</span><span id="connection" class="badge">Connecting…</span></header>
+    <main>
+      <div id="notice" class="notice" role="status" hidden></div>
+      {% if page == 'home' %}
+      <section class="page-heading"><div><p class="eyebrow">YOUR LAB, AT A GLANCE</p><h1>Every project. One workspace.</h1><p>Connect a board, watch your data, and see what happens at the edge.</p></div><a class="button primary" href="/new">＋ Connect a board</a></section>
+      <section id="stats" class="stats" aria-label="Lab totals"></section>
+      <section><div class="section-heading"><h2>Projects <span id="project-count" class="count">0</span></h2><span class="subtle">Live from your local broker</span></div><div id="projects" class="project-grid"></div></section>
+      <section class="panel"><div class="section-heading"><div><h2>From setup to first data</h2><p class="subtle">Time from starting the wizard to the first valid live reading.</p></div><a class="text-link" href="/api/metrics.csv">Export CSV ↗</a></div><div id="metrics" class="table-wrap"></div></section>
+      {% elif page == 'project' %}
+      <section class="page-heading"><div><p class="eyebrow">PROJECT WORKSPACE</p><h1>{{ project }}</h1><p id="project-description">Waiting for the latest readings…</p></div><a class="button" href="/api/projects/{{ project }}/readings.csv">↓ Export readings</a></section>
+      <section id="stats" class="stats" aria-label="Project totals"></section>
+      <section><div class="section-heading"><h2>Live sensors</h2><span class="subtle">Latest 120 points per series · received time</span></div><div id="sensors" class="sensor-grid"></div></section>
+      <div class="two-columns"><section class="panel"><h2>Devices</h2><div id="devices" class="table-wrap"></div></section><section class="panel"><h2>Alerts &amp; summaries</h2><div id="events" class="event-list"></div></section></div>
+      <section class="panel"><div class="section-heading"><h2>Live message viewer</h2><span class="subtle">Last 20 · contract fields only</span></div><p class="subtle">Extra fields and invalid payload text are omitted to avoid storing accidental private data.</p><div id="messages" class="message-list"></div></section>
+      {% elif page == 'new' %}
+      <section class="page-heading"><div><p class="eyebrow">FROM BOARD TO BROWSER</p><h1>Give your next idea a home.</h1><p>A short checklist to connect your board and capture your first reading.</p></div><span class="badge">No account needed</span></section>
+      <section class="panel wizard-form"><h2>01 &nbsp; Define your project</h2><p class="subtle">Names use lowercase letters, digits and hyphens. Start with a letter or digit.</p>
+        <form id="project-form">
+          <div class="form-grid"><label>Project name<input name="project" required maxlength="48" pattern="[a-z0-9][a-z0-9-]{0,47}" placeholder="greenhouse"></label><label>Device name<input name="device" required maxlength="48" pattern="[a-z0-9][a-z0-9-]{0,47}" placeholder="esp32-1"></label><label>Sensor name<input name="sensor" required maxlength="48" pattern="[a-z0-9][a-z0-9-]{0,47}" placeholder="pot"></label><label>Your board<select name="board"><option value="esp32">ESP32 over WiFi</option><option value="uno">Arduino Uno over USB serial</option></select></label></div>
+          <button class="button primary" type="submit">Create connection checklist →</button>
+        </form>
+      </section>
+      <section id="checklist" class="panel" hidden><h2>02 &nbsp; Connect your board</h2><ol id="steps" class="steps"></ol><div id="first-data" class="first-data" role="status"></div></section>
+      {% else %}
+      <section class="page-heading"><div><p class="eyebrow">MEASURE, DON’T ASSUME</p><h1>How far does your data travel?</h1><p>Compare MQTT round trips through your local edge and a public cloud stand-in.</p></div><a class="button" href="/api/benchmarks.csv">↓ Export results</a></section>
+      <section class="panel"><div class="benchmark-intro"><div><h2>Edge vs Cloud</h2><p>100 samples per broker · 1 discarded warm-up · one clock</p></div><span class="badge">Network path only</span></div>
+        <p class="callout">This measures network round trips, not cloud computation. The public broker is shared; results vary. Only generated sample numbers are sent. Never send private data.</p>
+        <form id="benchmark-form" class="inline-form"><label>Public broker hostname<input name="cloud_host" id="cloud-host" value="test.mosquitto.org" required maxlength="253"></label><button class="button primary" type="submit" id="run-benchmark">Run benchmark ↗</button></form>
+        <p id="benchmark-status" role="status" class="subtle">Ready when you are. Lost samples can make a run take a few minutes.</p>
+      </section>
+      <section class="panel"><h2>Latest completed run</h2><div id="benchmark-chart" class="benchmark-chart"></div><div id="benchmark-results" class="table-wrap"></div></section>
+      <section class="panel"><h2>Run history</h2><div id="benchmark-history" class="table-wrap"></div></section>
+      {% endif %}
+      {% if page != 'benchmark' %}
+      <div class="two-columns"><section class="panel"><div class="section-heading"><h2>Problems</h2><span id="problem-count" class="count">0</span></div><div id="problems" class="problem-list"></div></section><section class="panel"><h2>No data yet?</h2><div id="troubleshooting"></div><p class="subtle small">We can only see what reaches the broker. Wiring and board WiFi cannot be checked from here.</p></section></div>
+      {% endif %}
+      <footer><span>EdgeLab / An open lab workspace</span><span>Development only · anyone on this network can view and change projects</span></footer>
+    </main>
+  </div>
+</body>
+</html>

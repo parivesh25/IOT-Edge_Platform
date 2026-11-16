@@ -25,7 +25,8 @@ void connectMqtt() {
 }
 
 void publishValue(const char* sensor, float value) {
-  char t[80], msg[120];
+  // The contract allows names up to 48 characters; leave room for all three.
+  char t[160], msg[256];
   snprintf(t, sizeof(t), "lab/%s/%s/%s", PROJECT, DEVICE_ID, sensor);
   snprintf(msg, sizeof(msg),
            "{\"device\":\"%s\",\"sensor\":\"%s\",\"value\":%.1f}",
@@ -38,6 +39,7 @@ void setup() {
   Serial.begin(115200);
   connectWifi();
   mqtt.setServer(BROKER_IP, 1883);
+  mqtt.setBufferSize(512);   // topic + JSON must fit in one MQTT packet
 }
 
 void loop() {

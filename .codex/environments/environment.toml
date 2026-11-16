@@ -35,3 +35,9 @@ name = "Run tests"
 icon = "tool"
 command = '& .\tools\workspace.ps1 -Action Test'
 platform = "win32"
+
+[[actions]]
+name = "Open dashboard"
+icon = "tool"
+command = '& .\tools\workspace.ps1 -Action Open'
+platform = "win32"

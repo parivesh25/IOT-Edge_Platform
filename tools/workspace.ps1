@@ -1,7 +1,7 @@
 # Commands run from the Git root or any subfolder, without copying local files.
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('Setup', 'Check', 'Start', 'Stop', 'Test')]
+    [ValidateSet('Setup', 'Check', 'Start', 'Stop', 'Test', 'Open')]
     [string]$Action
 )
 
@@ -48,6 +48,12 @@ try {
             Assert-CommandSucceeded 'Validate Compose configuration'
         }
         'Start' {
+            # Pass the laptop address into Docker; a container cannot detect the
+            # Windows hotspot adapter reliably. An explicit LAN_IP wins.
+            if (-not $env:LAN_IP -and (Test-Path -LiteralPath $venvPython)) {
+                $detectedIp = & $venvPython (Join-Path $PSScriptRoot 'show_ip.py')
+                if ($LASTEXITCODE -eq 0) { $env:LAN_IP = $detectedIp }
+            }
             & docker compose --project-name $composeProject --file $composeFile up -d --build
             Assert-CommandSucceeded 'Start platform'
         }
@@ -58,11 +64,11 @@ try {
         }
         'Test' {
             if (-not (Test-Path -LiteralPath $venvPython)) {
-                throw 'The repository .venv is missing. Restore your existing environment before running tests.'
+                throw 'The repository .venv is missing. Run the Setup action before running tests.'
             }
             $testsPath = Join-Path $appRoot 'tests'
             if (-not (Test-Path -LiteralPath $testsPath)) {
-                throw 'No tests directory exists yet. Tests are scheduled for Phase 2.'
+                throw 'The application tests directory is missing.'
             }
             Push-Location $appRoot
             try {
@@ -71,6 +77,10 @@ try {
             } finally {
                 Pop-Location
             }
+        }
+        'Open' {
+            $dashboardPort = if ($env:DASHBOARD_PORT) { $env:DASHBOARD_PORT } else { '8080' }
+            Start-Process "http://localhost:$dashboardPort"
         }
     }
 } finally {
