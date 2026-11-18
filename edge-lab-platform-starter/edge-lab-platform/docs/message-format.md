@@ -42,6 +42,7 @@ Example:
 - Project/device/sensor names use 1-48 lowercase letters, digits or hyphens,
   beginning with a letter or digit. Project names `alerts`, `summary` and `status`
   are reserved. Topic and payload device/sensor names must match.
+- Sensor names additionally allow underscores, including `chip_temp` and `wifi_rssi`.
 - Numbers must be finite, not quoted strings, booleans, NaN or infinity. Optional
   `ts` must be nonnegative Unix seconds. Maximum payload size is 4096 bytes.
 - Extra JSON fields are ignored and not stored by the dashboard. Its raw viewer

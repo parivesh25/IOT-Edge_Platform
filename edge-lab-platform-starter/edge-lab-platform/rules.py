@@ -2,7 +2,7 @@
 import json
 import os
 from pathlib import Path
-from common import number, valid_name
+from common import number, valid_name, valid_sensor
 from edge_service.logic import RULES
 
 
@@ -17,7 +17,7 @@ def read_rules(path):
             if not valid_name(project) or not isinstance(sensors, dict) or len(sensors) > 100:
                 return {}
             for sensor, rule in sensors.items():
-                if (not valid_name(sensor) or not isinstance(rule, list) or len(rule) != 2
+                if (not valid_sensor(sensor) or not isinstance(rule, list) or len(rule) != 2
                         or rule[0] not in ('above', 'below') or not number(rule[1])):
                     return {}
         return data
@@ -34,7 +34,7 @@ def for_project(project, saved):
 
 
 def save_rule(project, sensor, direction, limit):
-    if not valid_name(project) or not valid_name(sensor) or direction not in ('above', 'below') or not number(limit):
+    if not valid_name(project) or not valid_sensor(sensor) or direction not in ('above', 'below') or not number(limit):
         raise ValueError('Choose a valid sensor name, above/below direction and finite numeric limit.')
     path = rules_path()
     saved = read_rules(path)

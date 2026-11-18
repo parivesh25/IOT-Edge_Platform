@@ -18,6 +18,11 @@ def valid_name(value):
     return isinstance(value, str) and bool(NAME.fullmatch(value))
 
 
+def valid_sensor(value):
+    # Built-in sensors chip_temp and wifi_rssi use underscores.
+    return isinstance(value, str) and bool(re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,47}", value))
+
+
 def number(value):
     # bool is a Python int subclass, but JSON true is not a sensor measurement.
     try:
@@ -28,9 +33,9 @@ def number(value):
 
 def parse_reading(topic, payload):
     parts = topic.split("/")
-    if len(parts) != 4 or parts[0] != "lab" or not all(valid_name(p) for p in parts[1:]):
+    if len(parts) != 4 or parts[0] != "lab" or not valid_name(parts[1]) or not valid_name(parts[2]) or not valid_sensor(parts[3]):
         raise MessageProblem("Topic must be lab/<project>/<device>/<sensor>.",
-                             "Use four topic segments with lowercase letters, digits or hyphens (1-48 characters).")
+                             "Use four topic segments with lowercase letters, digits or hyphens (1-48 characters); sensors also allow underscores.")
     _, project, device, sensor = parts
     if project in RESERVED:
         raise MessageProblem("This project name is reserved for platform messages.", "Choose a different PROJECT name.")

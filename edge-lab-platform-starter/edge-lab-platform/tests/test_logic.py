@@ -8,6 +8,11 @@ from edge_service.logic import Windows, breached
 
 
 class MessageTests(unittest.TestCase):
+    def test_builtin_sensor_names_with_underscores(self):
+        for sensor in ('chip_temp', 'wifi_rssi'):
+            project, data = parse_reading(f'lab/demo/board/{sensor}', json.dumps({'device':'board', 'sensor':sensor, 'value':12}))
+            self.assertEqual(data['sensor'], sensor)
+
     def test_good_reading_and_extra_field_filter(self):
         project, data = parse_reading("lab/demo/board/pot", b'{"device":"board","sensor":"pot","value":12,"ignored":"example"}')
         self.assertEqual(project, "demo")

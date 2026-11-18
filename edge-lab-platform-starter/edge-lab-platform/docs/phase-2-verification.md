@@ -1,5 +1,16 @@
 # Priority build verification
 
+## Real ESP32 follow-up, 18 November 2026
+
+The student uploaded the sketch and supplied Serial Monitor output. The dashboard
+API independently confirmed device esp32s3eth-1 online in project demo, receiving
+pot, touch, chip_temp and wifi_rssi with simulated=0 at about four readings/second.
+Real edge summaries were also observed. A validator bug rejecting underscores
+in built-in sensor names was fixed; 20 unit tests passed including a regression
+test for chip_temp/wifi_rssi. Sensor underscores are documented in the contract.
+This supersedes the earlier ESP32 publishing verification limitation below.
+Uno hardware and sensor calibration remain unverified.
+
 Verified on 16 November 2026 using the isolated codex/dashboard worktree.
 
 - 19 standard-library unit tests passed.

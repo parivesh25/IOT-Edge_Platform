@@ -11,7 +11,7 @@ import sqlite3
 import threading
 import time
 
-from common import MessageProblem, RESERVED, number, parse_reading, valid_name
+from common import MessageProblem, RESERVED, number, parse_reading, valid_name, valid_sensor
 
 
 class Store:
@@ -78,7 +78,7 @@ class Store:
         self.db.execute("INSERT INTO projects(name) VALUES (?)", (name,))
 
     def create_project(self, name, device, sensor, board):
-        if not all(valid_name(item) for item in (name, device, sensor)) or name in RESERVED:
+        if not valid_name(name) or not valid_name(device) or not valid_sensor(sensor) or name in RESERVED:
             raise ValueError("Names need 1-48 lowercase letters, digits or hyphens; start with a letter/digit. alerts, summary and status are reserved.")
         if board not in ("esp32", "uno"):
             raise ValueError("Choose ESP32 over WiFi or Arduino Uno over USB serial.")
@@ -139,7 +139,7 @@ class Store:
             parts = topic.split("/")
             if (not isinstance(data, dict) or len(parts) != 4 or not valid_name(data.get("project"))
                     or data["project"] in RESERVED or data.get("device") != parts[2]
-                    or data.get("sensor") != parts[3] or not all(valid_name(p) for p in parts[2:])):
+                    or data.get("sensor") != parts[3] or not valid_name(parts[2]) or not valid_sensor(parts[3])):
                 raise ValueError()
             kind = parts[1]
             fields = ("value", "limit") if kind == "alerts" else ("avg", "min", "max", "count")

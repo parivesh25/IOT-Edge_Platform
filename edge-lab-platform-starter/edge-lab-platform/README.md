@@ -120,7 +120,7 @@ reachability from another device are not verified by these software tests.
 
 ## Roadmap
 
-- [ ] ESP32 publishes to the broker
+- [x] ESP32 publishes to the broker (real board verified 18 November 2026)
 - [ ] Uno joins through the serial gateway
 - [x] Edge service: rules and summaries (simulator verified)
 - [x] Local storage (SQLite)
