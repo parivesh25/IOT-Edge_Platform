@@ -13,19 +13,46 @@ WiFiClient wifiClient;
 PubSubClient mqtt(wifiClient);
 
 void connectWifi() {
+  Serial.println("Connecting to WiFi (credentials hidden)...");
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) delay(500);
+  unsigned long lastReport = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    if (millis() - lastReport >= 5000) {
+      Serial.println("Still waiting for WiFi. Check hotspot and local settings.");
+      lastReport = millis();
+    }
+  }
+  Serial.println("WiFi connected.");
+  // Addresses help diagnose routing; never print WiFi names or passwords.
+  Serial.print("ESP32 IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Subnet mask: ");
+  Serial.println(WiFi.subnetMask());
+  Serial.print("Gateway: ");
+  Serial.println(WiFi.gatewayIP());
+  Serial.print("MQTT target: ");
+  Serial.print(BROKER_IP);
+  Serial.println(":1883");
 }
 
 void connectMqtt() {
   while (!mqtt.connected()) {
+    Serial.println("Connecting to MQTT broker on port 1883...");
     mqtt.connect(DEVICE_ID);
-    if (!mqtt.connected()) delay(2000);
+    if (!mqtt.connected()) {
+      Serial.print("MQTT connection failed; state code: ");
+      Serial.println(mqtt.state());
+      Serial.println("Check broker is running, BROKER_IP and firewall; retrying.");
+      delay(2000);
+    }
   }
+  Serial.println("MQTT connected.");
 }
 
 void publishValue(const char* sensor, float value) {
-  char t[80], msg[120];
+  // The contract allows names up to 48 characters; leave room for all three.
+  char t[160], msg[256];
   snprintf(t, sizeof(t), "lab/%s/%s/%s", PROJECT, DEVICE_ID, sensor);
   snprintf(msg, sizeof(msg),
            "{\"device\":\"%s\",\"sensor\":\"%s\",\"value\":%.1f}",
@@ -36,8 +63,12 @@ void publishValue(const char* sensor, float value) {
 
 void setup() {
   Serial.begin(115200);
+  // Give native USB serial time to appear, without waiting forever for a monitor.
+  delay(2000);
+  Serial.println("EdgeLab ESP32 starting.");
   connectWifi();
   mqtt.setServer(BROKER_IP, 1883);
+  mqtt.setBufferSize(512);   // topic + JSON must fit in one MQTT packet
 }
 
 void loop() {
