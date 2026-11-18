@@ -13,15 +13,31 @@ WiFiClient wifiClient;
 PubSubClient mqtt(wifiClient);
 
 void connectWifi() {
+  Serial.println("Connecting to WiFi (credentials hidden)...");
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) delay(500);
+  unsigned long lastReport = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    if (millis() - lastReport >= 5000) {
+      Serial.println("Still waiting for WiFi. Check hotspot and local settings.");
+      lastReport = millis();
+    }
+  }
+  Serial.println("WiFi connected.");
 }
 
 void connectMqtt() {
   while (!mqtt.connected()) {
+    Serial.println("Connecting to MQTT broker on port 1883...");
     mqtt.connect(DEVICE_ID);
-    if (!mqtt.connected()) delay(2000);
+    if (!mqtt.connected()) {
+      Serial.print("MQTT connection failed; state code: ");
+      Serial.println(mqtt.state());
+      Serial.println("Check broker is running, BROKER_IP and firewall; retrying.");
+      delay(2000);
+    }
   }
+  Serial.println("MQTT connected.");
 }
 
 void publishValue(const char* sensor, float value) {
@@ -37,6 +53,9 @@ void publishValue(const char* sensor, float value) {
 
 void setup() {
   Serial.begin(115200);
+  // Give native USB serial time to appear, without waiting forever for a monitor.
+  delay(2000);
+  Serial.println("EdgeLab ESP32 starting.");
   connectWifi();
   mqtt.setServer(BROKER_IP, 1883);
   mqtt.setBufferSize(512);   // topic + JSON must fit in one MQTT packet
