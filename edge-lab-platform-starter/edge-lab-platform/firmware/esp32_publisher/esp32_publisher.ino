@@ -24,6 +24,16 @@ void connectWifi() {
     }
   }
   Serial.println("WiFi connected.");
+  // Addresses help diagnose routing; never print WiFi names or passwords.
+  Serial.print("ESP32 IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Subnet mask: ");
+  Serial.println(WiFi.subnetMask());
+  Serial.print("Gateway: ");
+  Serial.println(WiFi.gatewayIP());
+  Serial.print("MQTT target: ");
+  Serial.print(BROKER_IP);
+  Serial.println(":1883");
 }
 
 void connectMqtt() {
