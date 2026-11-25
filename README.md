@@ -5,6 +5,8 @@ The application and firmware live in
 Read its [project guide](edge-lab-platform-starter/edge-lab-platform/README.md)
 for the architecture, message contract and hardware instructions.
 
+Moving to another Windows PC? See the [migration guide](edge-lab-platform-starter/edge-lab-platform/docs/windows-migration.md).
+
 From this Git root in **PowerShell**:
 
 ```powershell
