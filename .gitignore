@@ -1,0 +1,32 @@
+# Private device and local environment settings, at any depth.
+secrets.h
+.env
+.env.*
+!.env.example
+
+# Python environments and generated files.
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local readings, SQLite journals, and benchmark history.
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+data/
+benchmark-history/
+benchmark_history/
+benchmark-results/
+benchmark_history.*
+benchmark-history.*
+
+# Local worktrees and Codex scratch files; share only the environment definition.
+.worktrees/
+worktrees/
+.codex/*
+!.codex/environments/
+.codex/environments/*
+!.codex/environments/environment.toml
+*.tmp

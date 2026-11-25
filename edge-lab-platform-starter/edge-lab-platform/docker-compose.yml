@@ -1,9 +1,75 @@
 services:
   mosquitto:
     image: eclipse-mosquitto:2
-    container_name: mosquitto
     ports:
-      - "1883:1883"
+      - "${MQTT_PORT:-1883}:1883"
     volumes:
       - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "health/broker", "-m", "ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  edge:
+    build: .
+    command: ["python", "-m", "edge_service.edge_service"]
+    environment:
+      BROKER_HOST: mosquitto
+      RULES_FILE: /rules/rules.json
+    volumes:
+      - rules-data:/rules:ro
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import pathlib,time; assert time.time()-float(pathlib.Path('/tmp/edge-heartbeat').read_text()) < 15"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  dashboard:
+    build: .
+    ports:
+      - "${DASHBOARD_PORT:-8080}:8080"
+    environment:
+      BROKER_HOST: mosquitto
+      DATABASE_PATH: /data/readings.db
+      RULES_FILE: /rules/rules.json
+      LAN_IP: "${LAN_IP:-}"
+      CLOUD_BROKER: "${CLOUD_BROKER:-test.mosquitto.org}"
+    volumes:
+      - dashboard-data:/data
+      - rules-data:/rules
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  dashboard-data:
+  rules-data:
